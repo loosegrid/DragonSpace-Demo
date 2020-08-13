@@ -1,0 +1,45 @@
+Profiler data/
+Supplementary assets/
+Assets/FriendlyCleanUI/_raw/photoshop/*
+Assets/CinemachineExamples/*
+Assets/SampleScenes/*
+Assets/Standard Assets/*
+
+#Unity generated
+
+Temp/
+Library/
+Builds/
+Packages/
+
+#Visual Studio / MonoDevelop generated
+
+.vs/
+ExportedObj/
+obj/
+*.svd
+*.userprefs
+/*.csproj
+*.pidb
+*.suo
+/*.sln
+*.user
+*.unityproj
+*.booproj
+
+#OS generated
+
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.lock
+
+# Excel temporary
+~$*.xls*
+
+# Excel Backup File
+*.xlk
