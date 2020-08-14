@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using QTExperiments.Grids;
+using DragonSpace.Grids;
 
 //simple boids implementation to test quadtrees with. Not especially interesting or optimized!
 public class GridBoid : MonoBehaviour, IGridElt
@@ -13,7 +13,7 @@ public class GridBoid : MonoBehaviour, IGridElt
     public IGridElt NextElt { get; set; } = null;
 
     Transform tf;
-    public int id { get; set; }
+    public int ID { get; set; }
     public float halfWidth;   
     public float halfHeight;
     #endregion
@@ -86,7 +86,7 @@ public class GridBoid : MonoBehaviour, IGridElt
         float x = Xf + facing.x * 8;
         float y = Yf + facing.z * 8;
         //adding 2 here so the radius is from the bounding box's edges
-        flock = ugrid.Query(x - r, y - r, x + 2 + r, y + 2 + r, id); //TODO: variable sizes (not 2)
+        flock = ugrid.Query(x - r, y - r, x + 2 + r, y + 2 + r, ID); //TODO: variable sizes (not 2)
         UnityEngine.Profiling.Profiler.EndSample();
     }
 
@@ -150,7 +150,7 @@ public class GridBoid : MonoBehaviour, IGridElt
         int r = sets.radius;
         float x = Xf + facing.x * 8;
         float y = Yf + facing.z * 8;
-        flock = ugrid.Query(x - r, y - r, x + 2 + r, y + 2 + r, id); //TODO: variable sizes (not 2)
+        flock = ugrid.Query(x - r, y - r, x + 2 + r, y + 2 + r, ID); //TODO: variable sizes (not 2)
         for (int i = 0; i < flock.Count; ++i)
         {
             Gizmos.DrawLine(pos, ((GridBoid)flock[i]).transform.position);

@@ -1,4 +1,4 @@
-﻿namespace QTExperiments.Quadtrees
+﻿namespace DragonSpace.Quadtrees
 {
     using UnityEngine;
 

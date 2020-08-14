@@ -1,9 +1,9 @@
-﻿namespace QTExperiments.Grids
+﻿namespace DragonSpace.Grids
 {
-    using QTExperiments.Lists;
+    using DragonSpace.Lists;
     using System;
     using System.Collections.Generic;
-    using QTExperiments.Structs;
+    using DragonSpace.Structs;
 
     public class LooseDoubleGrid
     {
@@ -125,7 +125,7 @@
             IGridElt elt = cell.FirstElt;
             IGridElt prevElt = null;
 
-            while (elt.id != obj.id)
+            while (elt.ID != obj.ID)
             {
                 prevElt = elt;
                 elt = elt.NextElt;
@@ -204,7 +204,7 @@
                             IGridElt elt = cell.FirstElt;
                             while (elt != null)
                             {
-                                if (RectOverlap(in query, in elt) && elt.id != omitEltID)
+                                if (RectOverlap(in query, in elt) && elt.ID != omitEltID)
                                     _queryResults.Add(elt);
                                 elt = elt.NextElt;
                             }
@@ -504,7 +504,7 @@
 
     public interface IGridElt
     {
-        int id { get; set; }
+        int ID { get; set; }
         IGridElt NextElt { get; set; }
         // Stores the bottom-left position of the uniformly-sized element.
         float Xf { get; }

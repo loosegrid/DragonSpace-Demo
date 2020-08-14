@@ -1,6 +1,6 @@
-﻿using QTExperiments.Structs;
+﻿using DragonSpace.Structs;
 
-namespace QTExperiments.Grids
+namespace DragonSpace.Grids
 {
     public interface ILooseGridVisitor
     {

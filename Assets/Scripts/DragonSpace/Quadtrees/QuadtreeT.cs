@@ -1,11 +1,11 @@
-﻿namespace QTExperiments.Quadtrees
+﻿namespace DragonSpace.Quadtrees
 {
     using System;
     using System.Collections;
     using System.Collections.Generic;
     using System.Runtime.InteropServices;
-    using QTExperiments.Lists;
-    using QTExperiments.QtStructs;
+    using DragonSpace.Lists;
+    using DragonSpace.QtStructs;
 
     /// <summary>
     /// A rectangular point-region quadtree (I think) that inserts elements into every leaf node

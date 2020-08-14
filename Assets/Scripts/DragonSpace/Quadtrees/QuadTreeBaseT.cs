@@ -1,7 +1,7 @@
-﻿namespace QTExperiments.Quadtrees
+﻿namespace DragonSpace.Quadtrees
 {
     using System.Collections.Generic;
-    using QTExperiments.QtStructs;
+    using DragonSpace.QtStructs;
 
     /// <summary>
     /// Base class for quadtree implementations

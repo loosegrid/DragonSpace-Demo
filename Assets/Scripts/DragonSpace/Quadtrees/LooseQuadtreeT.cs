@@ -1,9 +1,9 @@
-﻿namespace QTExperiments.Quadtrees
+﻿namespace DragonSpace.Quadtrees
 {
     using System;
     using System.Collections.Generic;
-    using QTExperiments.Structs;
-    using QTExperiments.QtStructs;
+    using DragonSpace.Structs;
+    using DragonSpace.QtStructs;
 
     /// <summary>
     /// A loose quadtree that stores elements as a point and size rather than a bounding box.

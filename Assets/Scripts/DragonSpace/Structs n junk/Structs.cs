@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace QTExperiments.Structs
+namespace DragonSpace.Structs
 {
     /// <summary>
     /// Just four ints for a rectangle. Float constructor rounds up or down to make sure 
@@ -32,7 +32,7 @@ namespace QTExperiments.Structs
     }
 }
 
-namespace QTExperiments.QtStructs
+namespace DragonSpace.QtStructs
 {
     [Flags]
     public enum Quads

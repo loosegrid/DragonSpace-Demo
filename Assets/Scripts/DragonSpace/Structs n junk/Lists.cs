@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace QTExperiments.Lists
+namespace DragonSpace.Lists
 {
     /// <summary>
     /// Creates a pool of generic lists of type T to avoid GC allocations. Lists must be returned

@@ -1,8 +1,8 @@
-﻿using QTExperiments.Structs;
+﻿using DragonSpace.Structs;
 using System;
 using System.Collections.Generic;
 
-namespace QTExperiments.Grids
+namespace DragonSpace.Grids
 {
     public class UGrid<T> where T : class, IUGridElt
     {

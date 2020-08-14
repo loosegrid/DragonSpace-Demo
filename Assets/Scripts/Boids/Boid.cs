@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using QTExperiments.Quadtrees;
+using DragonSpace.Quadtrees;
 
 //simple boids implementation to test quadtrees with. Not especially interesting or optimized!
 public class Boid : BoidBase, IQtInsertable

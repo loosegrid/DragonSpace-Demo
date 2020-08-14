@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
-using QTExperiments.Quadtrees;
-using QTExperiments.Grids;
+using DragonSpace.Quadtrees;
+using DragonSpace.Grids;
 using System.Collections.Generic;
 
 [DisallowMultipleComponent]
@@ -162,7 +162,7 @@ public class BoidController : MonoBehaviour
             GameObject go = Instantiate(ldGridBoidPrefab);
             go.transform.position = pos;
             go.TryGetComponent(out GridBoid b);
-            b.id = entityCount;
+            b.ID = entityCount;
             b.pos = b.transform.position;
             ldGrid.Insert(b);
             ++entityCount;

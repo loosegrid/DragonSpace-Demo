@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using QTExperiments.Grids;
+using DragonSpace.Grids;
 
 public class UGridBoid : MonoBehaviour, IUGridElt
 {
