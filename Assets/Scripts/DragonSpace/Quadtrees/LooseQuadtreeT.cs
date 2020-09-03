@@ -795,7 +795,7 @@
         // ----------------------------------------------------------------------------------------
         /// <summary>
         /// Stores all the elements in the quadtree. Each element has 6 int fields: 
-        /// an object reference, center and half sizes, and a reference to the next element in whatever leaf
+        /// an object reference, origin point and size, and a reference to the next element in whatever leaf
         /// it's currently in
         /// </summary>
         protected LooseEltList<T> _elements = new LooseEltList<T>(1280);

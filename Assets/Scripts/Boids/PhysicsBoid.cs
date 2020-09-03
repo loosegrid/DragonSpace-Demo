@@ -2,9 +2,11 @@
 
 public class PhysicsBoid : BoidBase
 {
+    Collider col;
     private void Awake()
     {
         Init();
+        col = GetComponent<Collider>();
     }
 
     public override void Init()
@@ -23,11 +25,11 @@ public class PhysicsBoid : BoidBase
     {
         UnityEngine.Profiling.Profiler.BeginSample("Find Flockmates");
         int h = Physics.OverlapSphereNonAlloc(
-            pos + facing * 8, sets.radius, hits, 1, QueryTriggerInteraction.Collide);
+            (pos + facing * 8).ToV3(), sets.radius, hits, 1, QueryTriggerInteraction.Collide);
         flock.Clear();
         for (int i = 0; i < h; i++)
         {
-            if(hits[i].transform == transform) { continue; }
+            if(hits[i] == col) { continue; }
             flock.Add(hits[i].GetComponent<PhysicsBoid>());
         }
         UnityEngine.Profiling.Profiler.EndSample();
@@ -40,20 +42,21 @@ public class PhysicsBoid : BoidBase
 
     private void OnDrawGizmosSelected()
     {
+        Vector3 pos3 = pos.ToV3();
         Gizmos.color = Color.red;
-        Gizmos.DrawLine(pos, pos + avoid * 8);
+        Gizmos.DrawLine(pos3, pos3 + (avoid * 8).ToV3());
         Gizmos.color = Color.magenta;
-        Gizmos.DrawLine(pos, pos + adjoin.normalized * 8);
+        Gizmos.DrawLine(pos3, pos3 + (adjoin.normalized * 8).ToV3());
         Gizmos.color = Color.blue;
-        Gizmos.DrawLine(pos, pos + align.ToV3().normalized * 8);
+        Gizmos.DrawLine(pos3, pos3 + (align.normalized * 8).ToV3());
 
         Gizmos.color = Color.yellow;
         //draw detection radius
-        Gizmos.DrawWireSphere(pos + facing * 8, sets.radius);
+        Gizmos.DrawWireSphere(pos3 + (facing * 8).ToV3(), sets.radius);
         //show flockmates
         for (int i = 0; i < flock.Count; i++)
         {
-            Gizmos.DrawLine(pos, flock[i].pos);
+            Gizmos.DrawLine(pos3, flock[i].pos.ToV3());
         }
     }
 }

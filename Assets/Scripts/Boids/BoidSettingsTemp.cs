@@ -1,8 +1,14 @@
 ﻿using UnityEngine;
 
-//This should really be a ScriptableObject
-public class BoidSettingsTemp : MonoBehaviour
+//I guess it wasn't temp after all
+[CreateAssetMenu(fileName = "BoidSettings", menuName = "BoidSettings")]
+public class BoidSettingsTemp : ScriptableObject
 {
+    [Header("Test config")]
+    public bool showFPS;
+    public QtTestType type;
+    public RectInt bounds;
+    public int testElements;
     [Range(0,100)]
     public int speed;
     [Range(0, 100)]

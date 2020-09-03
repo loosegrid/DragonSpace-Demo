@@ -96,7 +96,7 @@
         }
 
         /// <summary>
-        /// Inserts a new element with a point and half size to the tree and returns the index to it
+        /// Inserts a new element with an origin point and size to the tree and returns the index to it
         /// </summary>
         /// <param name="thing">The object to insert</param>
         /// <param name="x">The x coordinate of the element's bottom-left corner</param>

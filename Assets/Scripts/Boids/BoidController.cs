@@ -2,16 +2,24 @@
 using DragonSpace.Quadtrees;
 using DragonSpace.Grids;
 using System.Collections.Generic;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 [DisallowMultipleComponent]
 public class BoidController : MonoBehaviour
 {
-    public QtTestType type;
-    public RectInt bounds;
+    public static bool useMenuSettings;
+    public BoidSettingsTemp menuSettings;
+    public BoidSettingsTemp sets;
+    QtTestType type;
     public GameObject boidPrefab;
     public GameObject physicsBoidPrefab;
+    public GameObject physics2DBoidPrefab;
+    public GameObject physicsXYBoidPrefab;
     public GameObject uGridBoidPrefab;
     public GameObject ldGridBoidPrefab;
+    public Text framerateResults;
+    public Text framerate;
 
     [Header("Quadtree config")]
     public bool autoConfig;
@@ -21,22 +29,33 @@ public class BoidController : MonoBehaviour
     public int cellSize;
     public int coarseCellSize;
 
-    [Header("Test config")]
-    public int testElements;
-
     int entityCount;
     QuadTreeBase<BoidBase> qt;
     UGrid<UGridBoid> uGrid;
     LooseDoubleGrid ldGrid;
 
+    public RectInt queryTest;
+
     System.Random r;
     private void Start()
     {
-        Camera.main.transform.position = new Vector3(bounds.width / 2, 50, bounds.height / 2);
-        Camera.main.orthographicSize = bounds.height / 1.6f;
+        startFrame = Time.frameCount;
+        startTime = Time.time;
+        if (useMenuSettings) { sets = menuSettings; }
+        BoidBase.bounds = sets.bounds;
+        BoidBase.sets = sets;
+        type = sets.type;
 
-        BoidBase.bounds = bounds;
-        BoidBase.sets = GetComponent<BoidSettingsTemp>();
+        if (type == QtTestType.Physics2D || type == QtTestType.PhysicsXY)
+        {
+            Camera.main.transform.position = new Vector3(sets.bounds.width / 2, sets.bounds.height / 2, -50);
+            Camera.main.transform.Rotate(new Vector3(-90, 0, 0));
+        }
+        else
+            Camera.main.transform.position = new Vector3(sets.bounds.width / 2, 50, sets.bounds.height / 2);
+
+        Camera.main.orthographicSize = sets.bounds.height / 1.6f;
+        
 
         r = new System.Random(12345);
         //insert boids
@@ -57,26 +76,58 @@ public class BoidController : MonoBehaviour
             case QtTestType.LooseDGrid:
                 InitLDGrid();
                 break;
+            case QtTestType.Physics2D:
+                InitPhysics2D();
+                break;
+            case QtTestType.PhysicsXY:
+                InitPhysicsXY();
+                break;
             default:
                 break;
         }
+
+        framerateResults.gameObject.SetActive(sets.showFPS);
+        framerateResults.text += " (" + frames.ToString() + " frames)";
     }
 
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            Application.Quit();
+            SceneManager.LoadScene(0);
         }
     }
 
     private void InitPhysics()
     {
-        for (int i = 0; i < testElements; ++i)
+        for (int i = 0; i < sets.testElements; ++i)
         {
-            Vector3Int pos = new Vector3Int(r.Next(bounds.width), 0, r.Next(bounds.height));
-            GameObject go = Instantiate(physicsBoidPrefab);
-            go.transform.position = pos;
+            Vector3Int pos = new Vector3Int(r.Next(sets.bounds.width), 0, r.Next(sets.bounds.height));
+            Instantiate(physicsBoidPrefab, pos, Quaternion.identity);
+            ++entityCount;
+        }
+    }
+
+    private void InitPhysics2D()
+    {
+        PhysicsBoid2D.sets = sets;
+        PhysicsBoid2D.bounds = sets.bounds;
+        for (int i = 0; i < sets.testElements; ++i)
+        {
+            Vector3Int pos = new Vector3Int(r.Next(sets.bounds.width), r.Next(sets.bounds.height), 0);
+            Instantiate(physics2DBoidPrefab, pos, Quaternion.identity);
+            ++entityCount;
+        }
+    }
+
+    private void InitPhysicsXY()
+    {
+        PhysicsBoidXY.sets = sets;
+        PhysicsBoidXY.bounds = sets.bounds;
+        for (int i = 0; i < sets.testElements; ++i)
+        {
+            Vector3Int pos = new Vector3Int(r.Next(sets.bounds.width), r.Next(sets.bounds.height), 0);
+            Instantiate(physicsXYBoidPrefab, pos, Quaternion.identity);
             ++entityCount;
         }
     }
@@ -84,21 +135,20 @@ public class BoidController : MonoBehaviour
     private void InitQuadtree()
     {
         if (autoConfig)
-            qt = QuadTree<BoidBase>.NewTree(bounds.width, bounds.height, 2);
+            qt = QuadTree<BoidBase>.NewTree(sets.bounds.width, sets.bounds.height, 2);
         else
-            qt = new QuadTree<BoidBase>(bounds.width, bounds.height, elementsPerQuad, maxDepth);
+            qt = new QuadTree<BoidBase>(sets.bounds.width, sets.bounds.height, elementsPerQuad, maxDepth);
 
         Boid.qt = qt;
 
-        for (int i = 0; i < testElements; ++i)
+        for (int i = 0; i < sets.testElements; ++i)
         {
-            Vector3Int pos = new Vector3Int(r.Next(bounds.width), 0, r.Next(bounds.height));
-            GameObject go = Instantiate(boidPrefab);
-            go.transform.position = pos;
+            Vector3Int pos = new Vector3Int(r.Next(sets.bounds.width), 0, r.Next(sets.bounds.height));
+            GameObject go = Instantiate(boidPrefab, pos, Quaternion.identity);
             go.TryGetComponent(out Boid b);
             b.Init();
             UnityEngine.Profiling.Profiler.BeginSample("Insert boids");
-            b.treeIndex = qt.InsertPoint(b, b.X, b.Y, b.Width, b.Height);
+            b.index_TEMP = qt.InsertPoint(b, b.X, b.Y, b.Width, b.Height);
             UnityEngine.Profiling.Profiler.EndSample();
             ++entityCount;
         }
@@ -107,21 +157,20 @@ public class BoidController : MonoBehaviour
     private void InitLooseQuadtree()
     {
         if (autoConfig)
-            qt = LooseQuadTree<BoidBase>.NewTree(bounds.width, bounds.height, 2);
+            qt = LooseQuadTree<BoidBase>.NewTree(sets.bounds.width, sets.bounds.height, 2);
         else
-            qt = new LooseQuadTree<BoidBase>(bounds.width, bounds.height, elementsPerQuad, maxDepth);
+            qt = new LooseQuadTree<BoidBase>(sets.bounds.width, sets.bounds.height, elementsPerQuad, maxDepth);
 
         Boid.qt = qt;
 
-        for (int i = 0; i < testElements; ++i)
+        for (int i = 0; i < sets.testElements; ++i)
         {
-            Vector3Int pos = new Vector3Int(r.Next(bounds.width), 0, r.Next(bounds.height));
-            GameObject go = Instantiate(boidPrefab);
-            go.transform.position = pos;
+            Vector3Int pos = new Vector3Int(r.Next(sets.bounds.width), 0, r.Next(sets.bounds.height));
+            GameObject go = Instantiate(boidPrefab, pos, Quaternion.identity);
             go.TryGetComponent(out Boid b);
             b.Init();
             UnityEngine.Profiling.Profiler.BeginSample("Insert boids");
-            b.treeIndex = ((LooseQuadTree<BoidBase>)qt).BulkInsertPoint(b, b.X, b.Y, b.Width, b.Height);
+            b.index_TEMP = ((LooseQuadTree<BoidBase>)qt).BulkInsertPoint(b, b.X, b.Y, b.Width, b.Height);
             UnityEngine.Profiling.Profiler.EndSample();
             ++entityCount;
         }
@@ -129,20 +178,18 @@ public class BoidController : MonoBehaviour
 
     private void InitUGrid()
     {
-        uGrid = new UGrid<UGridBoid>(2, 2, cellSize, cellSize, bounds.width, bounds.height);
+        uGrid = new UGrid<UGridBoid>(2, 2, cellSize, cellSize, sets.bounds.width, sets.bounds.height);
 
-        UGridBoid.bounds = bounds;
+        UGridBoid.bounds = sets.bounds;
         UGridBoid.ugrid = uGrid;
-        UGridBoid.sets = GetComponent<BoidSettingsTemp>();
+        UGridBoid.sets = sets;
 
-        for (int i = 0; i < testElements; ++i)
+        for (int i = 0; i < sets.testElements; ++i)
         {
-            Vector3Int pos = new Vector3Int(r.Next(bounds.width), 0, r.Next(bounds.height));
-            GameObject go = Instantiate(uGridBoidPrefab);
-            go.transform.position = pos;
+            Vector3Int pos = new Vector3Int(r.Next(sets.bounds.width), 0, r.Next(sets.bounds.height));
+            GameObject go = Instantiate(uGridBoidPrefab, pos, Quaternion.identity);
             go.TryGetComponent(out UGridBoid b);
-            b.id = entityCount;
-            b.pos = b.transform.position;
+            b.ID = entityCount;
             uGrid.Insert(b);
             ++entityCount;
         }
@@ -150,41 +197,49 @@ public class BoidController : MonoBehaviour
 
     private void InitLDGrid()
     {
-        ldGrid = new LooseDoubleGrid(cellSize, cellSize, coarseCellSize, coarseCellSize, bounds.width, bounds.height);
+        ldGrid = new LooseDoubleGrid(cellSize, cellSize, coarseCellSize, coarseCellSize, sets.bounds.width, sets.bounds.height);
 
-        GridBoid.bounds = bounds;
-        GridBoid.ugrid = ldGrid;
-        GridBoid.sets = GetComponent<BoidSettingsTemp>();
+        GridBoid.bounds = sets.bounds;
+        GridBoid.grid = ldGrid;
+        GridBoid.sets = sets;
 
-        for (int i = 0; i < testElements; ++i)
+        for (int i = 0; i < sets.testElements; ++i)
         {
-            Vector3Int pos = new Vector3Int(r.Next(bounds.width), 0, r.Next(bounds.height));
-            GameObject go = Instantiate(ldGridBoidPrefab);
-            go.transform.position = pos;
+            Vector3Int pos = new Vector3Int(r.Next(sets.bounds.width), 0, r.Next(sets.bounds.height));
+            GameObject go = Instantiate(ldGridBoidPrefab, pos, Quaternion.identity);
             go.TryGetComponent(out GridBoid b);
             b.ID = entityCount;
-            b.pos = b.transform.position;
             ldGrid.Insert(b);
             ++entityCount;
         }
     }
 
     public int frames;
+    int startFrame;
+    float startTime;
+    int framesPassed;
+    float timePassed;
     private void LateUpdate()
     {
         // note this has to be run at the end of every frame or update
         // it can be called less frequently if the tree isn't modified
         if (type == QtTestType.Quadtree || type == QtTestType.LooseQuadtree)
             qt.Cleanup();
-        if (type == QtTestType.LooseDGrid)
+        else if (type == QtTestType.LooseDGrid)
             ldGrid.TightenUp();
+        else if (type == QtTestType.Physics || type == QtTestType.PhysicsXY)
+            Physics.Simulate(Time.deltaTime);
+        else if (type == QtTestType.Physics2D)
+            Physics2D.Simulate(Time.deltaTime);
 
         //this framerate is wildly inaccurate in the editor, 
         //but it's useful for comparing optimization changes
-        if(Time.frameCount == frames)
+        framesPassed = Time.frameCount - startFrame;
+        if (framesPassed == frames)
         {
-            Debug.Log("Rough framerate: " + (Time.frameCount / Time.time).ToString());
+            framerate.text = (framesPassed / Time.timeSinceLevelLoad).ToString();
 
+            Debug.Log("Rough framerate: " + (framesPassed / Time.timeSinceLevelLoad).ToString());
             Debug.Break();
         }
     }
@@ -195,14 +250,65 @@ public class BoidController : MonoBehaviour
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireCube(
-            bounds.center.ToV3(),
-            new Vector3(bounds.width, 0, bounds.height));
+            sets.bounds.center.ToV3(),
+            new Vector3(sets.bounds.width, 0, sets.bounds.height));
         Gizmos.DrawLine(
-            new Vector3(0, 1, bounds.height / 2),
-            new Vector3(bounds.width, 1, bounds.height / 2));
+            new Vector3(0, 1, sets.bounds.height / 2),
+            new Vector3(sets.bounds.width, 1, sets.bounds.height / 2));
         Gizmos.DrawLine(
-            new Vector3(bounds.width / 2, 1, 0),
-            new Vector3(bounds.width / 2, 1, bounds.height));
+            new Vector3(sets.bounds.width / 2, 1, 0),
+            new Vector3(sets.bounds.width / 2, 1, sets.bounds.height));
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireCube(
+            queryTest.center.ToV3(),
+            queryTest.size.ToV3());
+
+        //TODO: this is stupid
+        if (Application.isPlaying)
+        {
+            List<MonoBehaviour> ugh = new List<MonoBehaviour>(4);
+            List<BoidBase> results = new List<BoidBase>(1);
+            List<UGridBoid> results2 = new List<UGridBoid>(1);
+            List<IGridElt> results3 = new List<IGridElt>(1);
+
+            switch (type)
+            {
+                case QtTestType.Quadtree:
+                    results = qt.Query(queryTest.xMin, queryTest.yMax, queryTest.xMax, queryTest.yMin);
+                    break;
+                case QtTestType.LooseQuadtree:
+                    results = qt.Query(queryTest.xMin, queryTest.yMax, queryTest.xMax, queryTest.yMin);
+                    break;
+                case QtTestType.UGrid:
+                    results2 = uGrid.Query(queryTest.xMin, queryTest.yMin, queryTest.xMax, queryTest.yMax);
+                    break;
+                case QtTestType.LooseDGrid:
+                    results3 = ldGrid.Query(queryTest.xMin, queryTest.yMin, queryTest.xMax, queryTest.yMax);
+                    break;
+                default:
+                    break;
+            }
+            for (int i = 0; i < results.Count; i++)
+            {
+                ugh.Add((MonoBehaviour)results[i]);
+            }
+            for (int i = 0; i < results2.Count; i++)
+            {
+                ugh.Add((MonoBehaviour)results2[i]);
+            }
+            for (int i = 0; i < results3.Count; i++)
+            {
+                ugh.Add((MonoBehaviour)results3[i]);
+            }
+
+            Gizmos.color = Color.green;
+            for (int i = 0; i < ugh.Count; i++)
+            {
+                Gizmos.DrawCube(ugh[i].transform.position, new Vector3(3, 3, 3));
+            }
+
+        }
 
         if (Application.isPlaying && drawTree)
         {
@@ -220,6 +326,8 @@ public class BoidController : MonoBehaviour
 public enum QtTestType
 {
     Physics,
+    Physics2D,
+    PhysicsXY,
     Quadtree,
     LooseQuadtree,
     UGrid,

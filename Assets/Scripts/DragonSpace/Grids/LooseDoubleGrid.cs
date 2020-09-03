@@ -384,6 +384,8 @@
             return Math.Min((int)(x * _invCellWidth), _numCols - 1);
         }
 
+        //TODO: move somewhere more useful
+
         private static bool RectOverlap(in AABB a, in IGridElt b)
         {
             int bLft = (int)b.Xf;
@@ -452,6 +454,12 @@
             }
         }
 
+        //TODO: This would be faster as a struct b/c data locality
+        //      but doesn't work with the way I'm inserting them into coarse cells
+        //      not worth addressing now, this way works and that's good enough.
+        //      maybe try out the one big list method since that would reduce copies?
+        //      then query overlapping cells and put them in a stack 
+        //      before checking for overlapping elements
         private class LooseCell
         {
             /// <summary>
@@ -501,18 +509,4 @@
         }
     }
     #endregion
-
-    public interface IGridElt
-    {
-        int ID { get; set; }
-        IGridElt NextElt { get; set; }
-        // Stores the bottom-left position of the uniformly-sized element.
-        float Xf { get; }
-        float Yf { get; }
-        int Width { get; }
-        int Height { get; }
-
-        //NOTE: destroying an element without removing it from the tree will break the list!
-        //      a dangerous trap, we'll see if I end up changing it later
-    }
 }

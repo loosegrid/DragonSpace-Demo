@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
  
-public static class MiscHelp
+public static class HelperJunk
 {
     public static bool CheckInRange(this GameObject self, MonoBehaviour target, float range)
     {
@@ -39,5 +40,47 @@ public static class MiscHelp
     public static Vector3 ToV3(this Vector2Int v)
     {
         return new Vector3(v.x, 0, v.y);
+    }
+
+    public static RectInt ToRectInt(this Transform t)
+    {
+        return new RectInt(
+            (int)(t.position.x - (t.localScale.x / 2f)),
+            (int)(t.position.z - (t.localScale.z / 2f)),
+            Mathf.CeilToInt(t.localScale.x),
+            Mathf.CeilToInt(t.localScale.z));
+    }
+
+    public static Bounds ToBounds(this Transform t)
+    {
+        return new Bounds(t.position, t.localScale);
+    }
+
+    public static Vector2 RotateRad(this Vector2 vector, float radians)
+    {
+        var sin = Mathf.Sin(radians);
+        var cos = Mathf.Cos(radians);
+        vector.Set(cos * vector.x - sin * vector.y, sin * vector.x + cos * vector.y);
+        return vector;
+    }
+
+    public static Vector2 Rotate(this Vector2 vector, float degrees)
+    {
+        return RotateRad(vector, degrees * Mathf.Deg2Rad);
+    }
+
+    public static Vector2 RotateRad(this Vector2 vector, float radians, Vector2 pivot)
+    {
+        var sin = Mathf.Sin(radians);
+        var cos = Mathf.Cos(radians);
+        vector -= pivot;
+        vector.Set(cos * vector.x - sin * vector.y, sin * vector.x + cos * vector.y);
+        vector += pivot;
+        return vector;
+    }
+
+    public static Vector2 Rotate(this Vector2 vector, float degrees, Vector2 pivot)
+    {
+        return RotateRad(vector, degrees * Mathf.Deg2Rad, pivot);
     }
 }

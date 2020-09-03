@@ -92,7 +92,7 @@ namespace DragonSpace.Grids
 
             T elt = row.cells[xIdx];
             T prevElt = null;
-            while (elt.id != obj.id)
+            while (elt.ID != obj.ID)
             {
                 prevElt = elt;
                 elt = (T)elt.NextElt;
@@ -167,7 +167,7 @@ namespace DragonSpace.Grids
                     T elt = row.cells[x];
                     while (elt != null)
                     {
-                        if (PointInRect(elt, in query) && elt.id != omitEltID)
+                        if (PointInRect(elt, in query) && elt.ID != omitEltID)
                             _queryResults.Add(elt);
                         elt = (T)elt.NextElt;
                     }
@@ -239,29 +239,5 @@ namespace DragonSpace.Grids
             // Stores the number of elements in the row.
             public int eltCount;
         }
-    }
-
-    public interface IUGridElt
-    {
-        /// <summary>
-        /// The next object in the linked list of whatever cell this is in.
-        /// Note destroying the object without removing it from the grid 
-        /// will break the linked list so don't do that
-        /// </summary>
-        IUGridElt NextElt { get; set; }
-
-        /// <summary>
-        /// The bottom-left position of the uniformly-sized element
-        /// </summary>
-        float Xf { get; }
-        /// <summary>
-        /// The bottom-left position of the uniformly-sized element
-        /// </summary>
-        float Yf { get; }
-        /// <summary>
-        /// A unique id to identify the object.
-        /// Only needs to be unique within the grid it's inserted into
-        /// </summary>
-        int id { get; set; }
     }
 }

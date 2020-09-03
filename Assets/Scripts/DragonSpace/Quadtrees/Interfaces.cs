@@ -49,8 +49,7 @@
         #endregion
     }
 
-    //TODO: actually use this in the quadtree???
-    public interface IQtInsertable
+    public interface IQtInsertable  //TODO: actually use this???
     {
         int X { get; }
         int Y { get; }

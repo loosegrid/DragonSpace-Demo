@@ -7,7 +7,7 @@ public class GridBoid : MonoBehaviour, IGridElt
 {
     #region Grid element implementation
     public float Xf => pos.x - halfWidth;  //This is a decent argument for using center pt
-    public float Yf => pos.z - halfHeight;
+    public float Yf => pos.y - halfHeight;
     public int Width { get; private set; }
     public int Height { get; private set; }
     public IGridElt NextElt { get; set; } = null;
@@ -15,27 +15,27 @@ public class GridBoid : MonoBehaviour, IGridElt
     Transform tf;
     public int ID { get; set; }
     public float halfWidth;   
-    public float halfHeight;
+    public float halfHeight;  //TODO: storing this here kinda defeats the point of not storing it in the grid
     #endregion
 
-    public static LooseDoubleGrid ugrid;
+    public static LooseDoubleGrid grid;
     public static RectInt bounds;
     public static BoidSettingsTemp sets;
     
-    public Vector3 pos;
-    public Vector3 facing;
+    public Vector2 pos;
+    public Vector2 facing;
     public Vector2 dir;
-    public Vector3 avoid;
+    public Vector2 avoid;
     public Vector2 align;
-    public Vector3 adjoin;
+    public Vector2 adjoin;
     List<IGridElt> flock;
 
     private void Awake()
     {
         tf = transform;
-        pos = tf.position;
+        pos = tf.position.ToV2();
         dir = Random.insideUnitCircle.normalized;
-        facing = dir.ToV3();
+        facing = dir;
 
         Width = (int)tf.localScale.x;
         Height = (int)tf.localScale.z;
@@ -47,25 +47,32 @@ public class GridBoid : MonoBehaviour, IGridElt
     {
         if (!AvoidBounds())
         {
+            UnityEngine.Profiling.Profiler.BeginSample("Find Flockmates");
             FindFlockmates();
+            UnityEngine.Profiling.Profiler.EndSample();
+
             UnityEngine.Profiling.Profiler.BeginSample("Update boid direction");
-            AvoidFlockmates();
-            AlignWithFlock();
-            MoveTowardFlock();
-            Steer();
+            DoBoidThing();
             UnityEngine.Profiling.Profiler.EndSample();
         }
+        Steer();
         Move();
     }
 
     void Steer()
     {
-        dir += avoid.ToV2() * sets.avoidStrength;
+        dir += avoid * sets.avoidStrength;
         dir += align.normalized * sets.alignStrength;
-        dir += adjoin.ToV2() * sets.adjoinStrength;
+        dir += adjoin * sets.adjoinStrength;
         dir.Normalize();
-        facing = Vector3.RotateTowards(facing, dir.ToV3(), sets.turnSpeed * (2 * Mathf.PI) * Time.deltaTime, 0);
-        transform.rotation = Quaternion.LookRotation(facing, Vector3.back);
+
+        //This is a bit weird, just doing it this way to be consistent with the other code
+        float maxTurn = sets.turnSpeed * 360 * Time.deltaTime;
+
+        float d = Mathf.Clamp(Vector2.SignedAngle(facing, dir), -maxTurn, maxTurn);
+        facing = facing.Rotate(d);
+
+        tf.forward = facing.ToV3();
     }
 
     void Move()
@@ -73,63 +80,51 @@ public class GridBoid : MonoBehaviour, IGridElt
         UnityEngine.Profiling.Profiler.BeginSample("Move");
         float oldX = Xf;
         float oldY = Yf;
-        tf.position += facing * sets.speed * Time.deltaTime;
-        pos = tf.position;  //update pos after moving in the grid!
+        pos += facing * (sets.speed * Time.deltaTime);
+        tf.position = pos.ToV3();
+        grid.Move(this, oldX, oldY, Xf, Yf);
         UnityEngine.Profiling.Profiler.EndSample();
-        ugrid.Move((IGridElt)this, oldX, oldY, Xf, Yf);
     }
 
     void FindFlockmates()
     {
-        UnityEngine.Profiling.Profiler.BeginSample("Find Flockmates");
         int r = sets.radius;
         float x = Xf + facing.x * 8;
-        float y = Yf + facing.z * 8;
+        float y = Yf + facing.y * 8;
         //adding 2 here so the radius is from the bounding box's edges
-        flock = ugrid.Query(x - r, y - r, x + 2 + r, y + 2 + r, ID); //TODO: variable sizes (not 2)
-        UnityEngine.Profiling.Profiler.EndSample();
+        flock = grid.Query(x - r, y - r, x + 2 + r, y + 2 + r, ID); //TODO: variable sizes (not 2)
     }
 
-    void AvoidFlockmates()
+    protected virtual void DoBoidThing()
     {
-        avoid.Set(0, 0, 0);
-        for (int i = flock.Count - 1; i >= 0; --i)
-        {
-            Vector3 neighbor = pos - ((GridBoid)flock[i]).pos;
-            avoid += neighbor / neighbor.sqrMagnitude;
-        }
-    }
-
-    void AlignWithFlock()
-    {
+        avoid.Set(0, 0);
         align.Set(0, 0);
-        for (int i = flock.Count - 1; i >= 0; --i)
-        {
-            align += ((GridBoid)flock[i]).dir;
-        }
-    }
+        adjoin.Set(0, 0);
 
-    void MoveTowardFlock()
-    {
-        adjoin.Set(0, 0, 0);
         for (int i = flock.Count - 1; i >= 0; --i)
         {
-            adjoin += ((GridBoid)flock[i]).pos;
+            GridBoid nextBoid = (GridBoid)flock[i];
+
+            Vector2 neighbor = pos - nextBoid.pos;
+            avoid += neighbor / neighbor.sqrMagnitude;
+
+            align += nextBoid.dir;
+
+            adjoin += nextBoid.pos;
         }
+
         if (flock.Count > 0)
         {
             adjoin /= flock.Count;
             adjoin -= pos;
         }
     }
-    
+
     bool AvoidBounds()
     {
-        if (pos.x < 0 || pos.x > bounds.width || pos.z < 0 || pos.z > bounds.height)
+        if (pos.x < 0 || pos.x > bounds.width || pos.y < 0 || pos.y > bounds.height)
         {
-            dir = new Vector2(bounds.height / 2, bounds.width / 2) - pos.ToV2();
-            facing = Vector3.RotateTowards(facing, dir.ToV3(), sets.turnSpeed * (2 * Mathf.PI) * Time.deltaTime, 0);
-            transform.rotation = Quaternion.LookRotation(facing, Vector3.back);
+            dir = new Vector2(bounds.height / 2, bounds.width / 2) - pos;
             return true;
         }
         else
@@ -138,22 +133,23 @@ public class GridBoid : MonoBehaviour, IGridElt
 
     private void OnDrawGizmosSelected()
     {
+        Vector3 pos3 = pos.ToV3();
         Gizmos.color = Color.red;
-        Gizmos.DrawLine(pos, pos + avoid * 8);
+        Gizmos.DrawLine(pos3, pos3 + (avoid * 8).ToV3());
         Gizmos.color = Color.magenta;
-        Gizmos.DrawLine(pos, pos + adjoin.normalized * 8);
+        Gizmos.DrawLine(pos3, pos3 + (adjoin.normalized * 8).ToV3());
         Gizmos.color = Color.blue;
-        Gizmos.DrawLine(pos, pos + align.ToV3().normalized * 8);
+        Gizmos.DrawLine(pos3, pos3 + (align.normalized * 8).ToV3());
 
         //show flockmates
         Gizmos.color = Color.yellow;
         int r = sets.radius;
         float x = Xf + facing.x * 8;
-        float y = Yf + facing.z * 8;
-        flock = ugrid.Query(x - r, y - r, x + 2 + r, y + 2 + r, ID); //TODO: variable sizes (not 2)
+        float y = Yf + facing.y * 8;
+        flock = grid.Query(x - r, y - r, x + 2 + r, y + 2 + r, ID); //TODO: variable sizes (not 2)
         for (int i = 0; i < flock.Count; ++i)
         {
-            Gizmos.DrawLine(pos, ((GridBoid)flock[i]).transform.position);
+            Gizmos.DrawLine(pos3, ((GridBoid)flock[i]).pos.ToV3());
         }
 
         //draw detection "radius"
@@ -162,19 +158,15 @@ public class GridBoid : MonoBehaviour, IGridElt
         Gizmos.DrawLine(new Vector3(x - r, 0, y + 2 + r), new Vector3(x + 2 + r, 0, y + 2 + r)); //top
         Gizmos.DrawLine(new Vector3(x + 2 + r, 0, y + 2 + r), new Vector3(x + 2 + r, 0, y - r)); //right
         Gizmos.DrawLine(new Vector3(x + 2 + r, 0, y - r), new Vector3(x - r, 0, y - r)); //bottom
-                
+
     }
 
     private void OnDrawGizmos()
     {
+        Vector3 pos3 = pos.ToV3();
         Gizmos.color = Color.green;
-        Gizmos.DrawLine(pos, pos + (dir.normalized.ToV3() * 4));
+        Gizmos.DrawLine(pos3, pos3 + (dir.ToV3() * 4));
         Gizmos.color = Color.white;
-        Gizmos.DrawLine(pos, pos + (facing * 4));
-
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawSphere(new Vector3(Xf, 0, Yf), 0.25f);
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawSphere(new Vector3(Xf+2, 0, Yf+2), 0.25f);
+        Gizmos.DrawLine(pos3, pos3 + (facing * 4).ToV3());
     }
 }
