@@ -3,7 +3,7 @@
 
  ![a boids simulation switching between differen visualizations of spatial partitioning structures](BoidsGif.gif)
 
- This is a C# implementation of the data structures described in [this StackOverflow answer](https://stackoverflow.com/questions/41946007/efficient-and-well-explained-implementation-of-a-quadtree-for-2d-collision-det) by user Dragon Energy, along with some boids to test them with. The boids themselves are very simple and not terribly pretty, but they only important part is that they're consistent test subjects.
+ This is a C# implementation of the data structures described in [this StackOverflow answer](https://stackoverflow.com/questions/41946007/efficient-and-well-explained-implementation-of-a-quadtree-for-2d-collision-det) by user Dragon Energy, along with some boids to test them with. The boids themselves are very simple and not terribly pretty, but the only important part is that they're consistent test subjects.
 
  The linked series of answers are an extremely detailed explanation of the concepts behind spatial partitioning in general, quadtrees and grids in particular. [This section](https://stackoverflow.com/a/48355534) covers the fundamentals. They also include code in C and Java, which is what I started this project by porting. 
 
